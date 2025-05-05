@@ -1,0 +1,66 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyinstaller bleak
+
+      - name: Build executable
+        run: |
+          pyinstaller --onefile --windowed watts_live_gui.py
+
+      - name: Rename binary
+        run: |
+          mkdir output
+          if [ "$RUNNER_OS" == "Windows" ]; then mv dist/watts_live_gui.exe output/WattsLiveConfig-Windows.exe
+          elif [ "$RUNNER_OS" == "macOS" ]; then mv dist/watts_live_gui output/WattsLiveConfig-macOS
+          else mv dist/watts_live_gui output/WattsLiveConfig-Linux
+          fi
+        shell: bash
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WattsLiveConfig-${{ runner.os }}
+          path: output/*
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: |
+            artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
