@@ -3,7 +3,7 @@ name: Build and Package App
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*' 
   workflow_dispatch:
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
           pyinstaller --onefile --windowed watts_live_gui.py
 
       - name: Upload EXE as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: WattsLiveConfig-Windows
           path: dist/watts_live_gui.exe
