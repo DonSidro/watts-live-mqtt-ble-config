@@ -1,0 +1,26 @@
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.spec
+
+# Installer logs
+pip-log.txt
+
+# Virtual environments
+.env/
+.venv/
+env/
+venv/
+ENV/
+
+# macOS system files
+.DS_Store
+
+# Windows system files
+Thumbs.db
