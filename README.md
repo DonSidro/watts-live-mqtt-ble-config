@@ -22,7 +22,7 @@ This utility is a **desktop GUI app** built with **Python**, **Tkinter**, and **
 
 - Python 3.8 or newer
 - BLE-compatible device (Bluetooth 4.0+)
-- OS: Windows, macOS, or Linux
+- OS: Windows
 
 ### Installation & Usage
 
@@ -40,16 +40,9 @@ python watts_live_gui.py
 
 ## 🔐 BLE Permissions & Notes
 
-### Windows/macOS
+### Windows
 
 - Ensure **Bluetooth is enabled**
-- On macOS, grant access in:  
-  `System Settings > Privacy & Security > Bluetooth`
-
-### Linux
-
-- May require running the script with `sudo`
-- BlueZ backend must be installed and active
 
 ## 🧠 Technical BLE Info
 
