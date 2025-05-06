@@ -7,12 +7,9 @@ on:
 
 jobs:
   build:
-    name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-    
+    name: Build on Windows
+    runs-on: windows-latest
+
     steps:
       - uses: actions/checkout@v3
 
@@ -32,16 +29,12 @@ jobs:
       - name: Rename binary
         run: |
           mkdir output
-          if [ "$RUNNER_OS" == "Windows" ]; then mv dist/watts_live_gui.exe output/WattsLiveConfig-Windows.exe
-          elif [ "$RUNNER_OS" == "macOS" ]; then mv dist/watts_live_gui output/WattsLiveConfig-macOS
-          else mv dist/watts_live_gui output/WattsLiveConfig-Linux
-          fi
-        shell: bash
+          move dist\watts_live_gui.exe output\WattsLiveConfig-Windows.exe
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WattsLiveConfig-${{ runner.os }}
+          name: WattsLiveConfig-Windows
           path: output/*
 
   release:
