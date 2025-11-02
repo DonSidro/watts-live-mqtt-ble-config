@@ -336,11 +336,16 @@ def toggle_pw():
     else:
         entry_password.configure(show="•")
         btn_show_pw.configure(text="Show")
+    # flip the state after updating UI
+    pw_visible.set(not pw_visible.get())
 entry_password = tb.Entry(form_card, show="•")
 entry_password.grid(row=5, column=1, sticky="ew", pady=6)
-btn_show_pw = tb.Button(form_card, text="Show",
-                        command=lambda: pw_visible.set(not pw_visible.get()) or toggle_pw(),
-                        bootstyle=SECONDARY)
+btn_show_pw = tb.Button(
+    form_card,
+    text="Show",
+    command=toggle_pw,
+    bootstyle=SECONDARY
+)
 btn_show_pw.grid(row=5, column=2, padx=(8, 0), pady=6, sticky="e")
 
 tb.Separator(form_card).grid(row=6, column=0, columnspan=3, sticky="ew", pady=(10, 12))
