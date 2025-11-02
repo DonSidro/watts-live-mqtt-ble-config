@@ -5,56 +5,31 @@ on:
     tags:
       - 'v*'
 
-permissions:
-  contents: write
-
 jobs:
   build:
     name: Build on Windows
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          if (Test-Path requirements.txt) {
-            pip install -r requirements.txt
-          } else {
-            pip install bleak paho-mqtt ttkbootstrap
-          }
-          pip install pyinstaller
+          pip install pyinstaller bleak paho-mqtt ttkbootstrap
 
-      # Optional: show versions (don’t fail if missing)
-      - name: Show installed packages
+      - name: Build executable
         run: |
-          python -m pip show bleak || true
-          python -m pip show paho-mqtt || true
-          python -m pip show ttkbootstrap || true
-          python -m pip show pyinstaller || true
-
-      - name: Build executable (PyInstaller)
-        run: |
-          $iconFlag = (Test-Path "watts_live.ico") ? "--icon=watts_live.ico" : ""
-          pyinstaller --noconfirm --onefile --windowed `
-            --name WattsLiveConfig `
-            --hidden-import=ttkbootstrap `
-            --hidden-import=ttkbootstrap.constants `
-            --hidden-import=paho.mqtt.client `
-            --collect-data ttkbootstrap `
-            $iconFlag `
-            watts_live_gui.py
+          pyinstaller --noconfirm --onefile --windowed watts_live_gui.py --hidden-import=ttkbootstrap --hidden-import=ttkbootstrap.constants
 
       - name: Rename binary
         run: |
           mkdir output
-          move dist\WattsLiveConfig.exe output\WattsLiveConfig-Windows.exe
+          move dist\watts_live_gui.exe output\WattsLiveConfig-Windows.exe
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -78,6 +53,7 @@ jobs:
         with:
           name: Release ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
-          files: artifacts/**/*
+          files: |
+            artifacts/**/*
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
