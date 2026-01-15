@@ -137,7 +137,7 @@ def connect_and_write():
                 addr = ble_devices[selected]
                 log_message(f"Connecting to {selected}…")
                 async with BleakClient(addr) as client:
-                    if not client.is_connected():
+                    if not client.is_connected:
                         raise RuntimeError("BLE client failed to connect.")
                     log_message("Connected. Writing values…")
                     values = {
