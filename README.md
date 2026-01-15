@@ -1,4 +1,4 @@
-# ⚡ Watts Live MQTT BLE Config
+#  Watts Live MQTT BLE Config
 
 A cross-platform desktop tool to configure **Watts Live** IoT devices over **Bluetooth Low Energy (BLE)** and monitor **MQTT messages** in real time.
 
@@ -6,28 +6,28 @@ This app allows you to scan for BLE-enabled Watts Live devices, enter MQTT conne
 
 ---
 
-## ✨ Features
+##  Features
 
-- 🔍 Scan for nearby **BLE devices** (e.g., “Watts Live”)
-- 🔗 Connect and write **MQTT configuration** to the device:
+-  Scan for nearby **BLE devices** (e.g., “Watts Live”)
+-  Connect and write **MQTT configuration** to the device:
   - Hostname  
   - Port  
   - Username  
   - Password
-- ⚙️ Subscribe to an MQTT topic automatically:
+-  Subscribe to an MQTT topic automatically:
   - Uses a **Serial Number** entered by the user  
   - Topic format: `watts/<serial_number>/measurement`
-- 🧩 Built-in **Activity Log** to display:
+-  Built-in **Activity Log** to display:
   - BLE connection status  
   - Write progress  
   - Live MQTT messages
-- 🖥️ **Modern, dark-themed GUI** built with [ttkbootstrap](https://github.com/israel-dryer/ttkbootstrap)
-- ✅ Input validation with real-time feedback and friendly error highlights
-- 🪶 Cross-platform (Windows, macOS, Linux)
+-  **Modern, dark-themed GUI** built with [ttkbootstrap](https://github.com/israel-dryer/ttkbootstrap)
+-  Input validation with real-time feedback and friendly error highlights
+-  Cross-platform (Windows, macOS, Linux)
 
 ---
 
-## 🖥️ Desktop GUI Version (Python)
+## Desktop GUI Version
 
 ### Requirements
 
@@ -38,7 +38,7 @@ This app allows you to scan for BLE-enabled Watts Live devices, enter MQTT conne
 
 ---
 
-### 🔧 Installation & Usage
+###  Installation & Usage
 
 ```bash
 # Clone the repository
@@ -54,7 +54,7 @@ python watts_live_gui.py
 
 ---
 
-## 📦 requirements.txt
+##  requirements.txt
 
 ```
 bleak>=0.22.0
@@ -64,7 +64,7 @@ ttkbootstrap>=1.10.1
 
 ---
 
-## 🚀 Building a Standalone App
+##  Building a Standalone App
 
 You can bundle this app into a standalone `.exe` (Windows) or `.app` (macOS) using [PyInstaller](https://pyinstaller.org/):
 
@@ -83,7 +83,7 @@ After building, the executable will appear in the `dist/` folder.
 
 ---
 
-## 🔐 BLE Permissions & Notes
+##  BLE Permissions & Notes
 
 ### Windows
 - Ensure **Bluetooth is enabled**
@@ -94,7 +94,7 @@ After building, the executable will appear in the `dist/` folder.
 
 ---
 
-## 🧠 Technical BLE Info
+##  Technical BLE Info
 
 ### Service UUID
 ```
@@ -112,7 +112,7 @@ a2e1ea9b-01e8-4fe5-9b99-35e9cb44d4b6
 
 ---
 
-## 📡 MQTT Listener Example
+##  MQTT Listener Example
 
 | Field | Example |
 |-------|----------|
@@ -127,7 +127,7 @@ Messages from this topic appear live in the **Activity Log** panel.
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 ### Main App
 ![Main](images/main.png)
@@ -140,7 +140,7 @@ Messages from this topic appear live in the **Activity Log** panel.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 watts-live-mqtt-ble-config/
@@ -153,7 +153,25 @@ watts-live-mqtt-ble-config/
 
 ---
 
-## 🤖 Development & Contribution
+# Q&A
+
+This page answers common questions about **watts-live-mqtt-ble-config**.
+
+#### **Q: What is this project?**
+#### **A:**  A simple python tool that lets you change the Characteristic UUID values of the Watts Live module enabling MQTT
+--
+#### **Q: Why was this project created?**
+#### **A:**  To take away the need of using an mobile app for manually changing the Characteristic UUID values and simplyfy the process.
+--
+#### **Q: Who is this project for?**
+#### **A:**  The user that wants to integrated the Watts Live module into Home Assistant or other Smart Home systems.
+--
+#### **Q: Where do I get user/password from?**
+#### **A:**  If you are using HAOS and Mosquitto add-on the user/password will be the as your HA user/password (it's recomended to create an MQTT user).
+If you are using HA Container user/password are set in the config file inside the Mosquitto container (password.txt).
+---
+
+## Development & Contribution
 
 If you’d like to improve the app:
 
@@ -165,17 +183,17 @@ pip install -r requirements.txt
 python watts_live_gui.py
 ```
 
-Pull requests and feature improvements are always welcome! 🙌
+Pull requests and feature improvements are always welcome! 
 
 ---
 
-## 📄 License
+##  License
 
 This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-## 👤 Author & Credits
+##  Author & Credits
 
 Created by **[Sidon (DonSidro)]**  
 Powered by [Bleak](https://github.com/hbldh/bleak), [ttkbootstrap](https://github.com/israel-dryer/ttkbootstrap), and [Paho-MQTT](https://www.eclipse.org/paho/).
