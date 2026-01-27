@@ -1,5 +1,13 @@
 #  Watts Live MQTT BLE Config
 
+[![GitHub Release][releases-shield]][releases]
+[![GitHub Activity][commits-shield]][commits]
+[![License][license-shield]](LICENSE)
+[![hacs][hacsbadge]][hacs]
+![Project Maintenance][maintenance-shield]
+
+<a href="https://buymeacoffee.com/mitsmarthome" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 40px !important;width: 145px !important;" ></a>
+
 A cross-platform desktop tool to configure **Watts Live** IoT devices over **Bluetooth Low Energy (BLE)** and monitor **MQTT messages** in real time.
 
 This app allows you to scan for BLE-enabled Watts Live devices, enter MQTT connection credentials, write them to the device, and optionally connect to your MQTT broker to view live measurement messages.
@@ -197,3 +205,13 @@ This project is licensed under the [MIT License](LICENSE).
 
 Created by **[Sidon (DonSidro)]**  
 Powered by [Bleak](https://github.com/hbldh/bleak), [ttkbootstrap](https://github.com/israel-dryer/ttkbootstrap), and [Paho-MQTT](https://www.eclipse.org/paho/).
+
+
+[commits-shield]: https://img.shields.io/github/commit-activity/y/DonSidro/watts-live-mqtt-ble-config.svg?style=flat-square
+[commits]: https://github.com/DonSidro/watts-live-mqtt-ble-config/commits/main
+[hacs]: https://github.com/hacs/integration
+[hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square
+[license-shield]: https://img.shields.io/github/license/DonSidro/watts-live-mqtt-ble-config.svg?style=flat-square
+[maintenance-shield]: https://img.shields.io/badge/maintainer-%40DonSidro-blue.svg?style=flat-square
+[releases-shield]: https://img.shields.io/github/release/DonSidro/watts-live-mqtt-ble-config.svg?include_prereleases&style=flat-square&style=flat-square
+[releases]: https://github.com/DonSidro/watts-live-mqtt-ble-config/releases
