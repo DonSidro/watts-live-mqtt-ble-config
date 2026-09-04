@@ -1,5 +1,6 @@
 import asyncio
 import threading
+import traceback
 import tkinter as tk
 from tkinter import messagebox
 from bleak import BleakScanner, BleakClient
@@ -156,6 +157,7 @@ def connect_and_write():
                 root.after(0, lambda: messagebox.showinfo("Success", "All values written."))
             except Exception as e:
                 log_message(f"Write failed: {e}")
+                log_message(traceback.format_exc())
                 root.after(0, lambda: messagebox.showerror("BLE Error", str(e)))
             finally:
                 root.after(0, lambda: set_busy(False))
@@ -333,14 +335,13 @@ entry_username.grid(row=4, column=1, sticky="ew", pady=6)
 tb.Label(form_card, text="Password").grid(row=5, column=0, sticky="w", pady=6)
 pw_visible = tk.BooleanVar(value=False)
 def toggle_pw():
+    pw_visible.set(not pw_visible.get())
     if pw_visible.get():
         entry_password.configure(show="")
         btn_show_pw.configure(text="Hide")
     else:
         entry_password.configure(show="•")
         btn_show_pw.configure(text="Show")
-    # flip the state after updating UI
-    pw_visible.set(not pw_visible.get())
 entry_password = tb.Entry(form_card, show="•")
 entry_password.grid(row=5, column=1, sticky="ew", pady=6)
 btn_show_pw = tb.Button(

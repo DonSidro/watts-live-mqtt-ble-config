@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pyinstaller bleak paho-mqtt ttkbootstrap
+          pip install pyinstaller -r requirements.txt
 
       - name: Build executable
         run: |
@@ -51,7 +51,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install "pyinstaller>=6.0" bleak paho-mqtt ttkbootstrap
+          pip install "pyinstaller>=6.0" -r requirements.txt
 
       - name: Verify Tk is available
         run: |

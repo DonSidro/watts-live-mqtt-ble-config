@@ -65,10 +65,14 @@ python watts_live_gui.py
 ##  requirements.txt
 
 ```
-bleak>=0.22.0
-paho-mqtt>=1.6.1
-ttkbootstrap>=1.10.1
+bleak>=0.22.0,<4
+paho-mqtt>=1.6.1,<3
+ttkbootstrap>=1.10.1,<3
 ```
+
+The upper bounds are intentional. The release workflow installs from this file, so
+without them a new major version of a dependency would land in a published build
+untested — `bleak` is already at 3.x, well past the 0.x API this app was written for.
 
 ---
 
