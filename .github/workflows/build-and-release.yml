@@ -76,6 +76,8 @@ jobs:
     name: Create GitHub Release
     needs: [build, build-macos]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Download all artifacts
@@ -91,4 +93,4 @@ jobs:
           files: |
             artifacts/**/*
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
