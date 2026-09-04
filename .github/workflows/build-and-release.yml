@@ -37,9 +37,44 @@ jobs:
           name: WattsLiveConfig-Windows
           path: output/*
 
+  build-macos:
+    name: Build on macOS (Apple Silicon)
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install "pyinstaller>=6.0" bleak paho-mqtt ttkbootstrap
+
+      - name: Verify Tk is available
+        run: |
+          python -c "import tkinter; print('Tk', tkinter.TkVersion)"
+
+      - name: Build .app bundle
+        run: |
+          pyinstaller --noconfirm watts_live_gui.spec
+
+      - name: Zip bundle
+        run: |
+          mkdir output
+          ditto -c -k --keepParent dist/WattsLiveConfig.app output/WattsLiveConfig-macOS-arm64.zip
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WattsLiveConfig-macOS
+          path: output/*
+
   release:
     name: Create GitHub Release
-    needs: build
+    needs: [build, build-macos]
     runs-on: ubuntu-latest
 
     steps:

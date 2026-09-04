@@ -74,7 +74,15 @@ ttkbootstrap>=1.10.1
 
 ##  Building a Standalone App
 
-You can bundle this app into a standalone `.exe` (Windows) or `.app` (macOS) using [PyInstaller](https://pyinstaller.org/):
+Prebuilt binaries for **Windows** and **macOS (Apple Silicon)** are attached to every
+[release][releases] — GitHub Actions builds them automatically on each `v*` tag. Build
+locally only if you want to change something.
+
+> [!NOTE]
+> [PyInstaller](https://pyinstaller.org/) cannot cross-compile. A Windows `.exe` has to be
+> built on Windows, and a macOS `.app` has to be built on macOS.
+
+### Windows
 
 ```bash
 pip install pyinstaller
@@ -87,7 +95,25 @@ Optionally include an app icon:
 pyinstaller --onefile --windowed --icon=watts_live.ico watts_live_gui.py
 ```
 
-After building, the executable will appear in the `dist/` folder.
+### macOS
+
+Build with the checked-in [`watts_live_gui.spec`](watts_live_gui.spec). A plain
+`--onefile --windowed` build will **not** work: since macOS 11, the system terminates any
+app that touches CoreBluetooth without an `NSBluetoothAlwaysUsageDescription` key in its
+`Info.plist`, so device scanning fails with no useful error. The spec adds that key.
+
+```bash
+brew install python-tk       # the system Tcl/Tk 8.5 is too old for ttkbootstrap
+pip install "pyinstaller>=6.0" -r requirements.txt
+pyinstaller --noconfirm watts_live_gui.spec
+open dist/WattsLiveConfig.app
+```
+
+The spec builds a **onedir** bundle on purpose. A onefile app unpacks itself into a fresh
+temporary directory on every launch, so macOS sees a different app each time and re-asks
+for — or silently denies — Bluetooth permission.
+
+After building, the executable or `.app` appears in the `dist/` folder.
 
 ---
 
@@ -97,7 +123,21 @@ After building, the executable will appear in the `dist/` folder.
 - Ensure **Bluetooth is enabled**
 - Run as administrator if BLE access is restricted
 
-### macOS / Linux
+### macOS
+- On the first scan, macOS asks for Bluetooth access — approve it. The setting can be
+  reviewed later under **System Settings → Privacy & Security → Bluetooth**.
+- Builds on the releases page are **not notarized by Apple**, so Gatekeeper quarantines them
+  and reports *“WattsLiveConfig.app is damaged and can’t be opened.”* This is the quarantine
+  flag, not a corrupt download — clear it once, after unzipping:
+
+  ```bash
+  xattr -dr com.apple.quarantine WattsLiveConfig.app
+  ```
+
+- The published build requires **macOS 11 (Big Sur) or newer on Apple Silicon**. On an Intel
+  Mac, build locally with the steps above.
+
+### Linux
 - Bluetooth permissions may require approval via system dialog
 
 ---
@@ -153,6 +193,8 @@ Messages from this topic appear live in the **Activity Log** panel.
 ```
 watts-live-mqtt-ble-config/
 ├── watts_live_gui.py      # Python GUI app
+├── watts_live_gui.spec    # PyInstaller spec for the macOS .app bundle
+├── .github/workflows/     # CI: builds the Windows .exe and macOS .app on each tag
 ├── README.md              # This file
 ├── requirements.txt       # Python dependencies
 ├── images/                # Screenshots

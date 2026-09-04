@@ -8,6 +8,8 @@ build/
 dist/
 *.egg-info/
 *.spec
+# ...except the hand-written macOS bundle spec
+!watts_live_gui.spec
 
 # Installer logs
 pip-log.txt
