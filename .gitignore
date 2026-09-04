@@ -26,3 +26,6 @@ ENV/
 
 # Windows system files
 Thumbs.db
+
+# IDE
+.idea/
