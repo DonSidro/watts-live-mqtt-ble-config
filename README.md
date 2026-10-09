@@ -66,7 +66,7 @@ python watts_live_gui.py
 
 ```
 bleak>=0.22.0,<4
-paho-mqtt>=1.6.1,<3
+paho-mqtt>=2.0,<3
 ttkbootstrap>=1.10.1,<3
 ```
 
