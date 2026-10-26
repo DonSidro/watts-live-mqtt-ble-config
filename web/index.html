@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watts Live Config</title>
+<meta name="description" content="Configure Watts Live modules over Bluetooth and watch their MQTT messages, straight from the browser.">
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.15.2/dist/mqtt.min.js"
+        integrity="sha384-haZiwxTLortiFcYMBEEE1+8ayC+o18YtuwHZv+4WQHoPaLzRjwOV6h7Vva5iLSCZ"
+        crossorigin="anonymous" defer></script>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --border: #d9dce1;
+    --text: #1d2026;
+    --muted: #5f6672;
+    --input-bg: #ffffff;
+    --primary: #2f6fdb;
+    --primary-text: #ffffff;
+    --success: #1f8a4c;
+    --danger: #c9372c;
+    --info-bg: #e8f0fd;
+    --ok-bg: #e6f4ec;
+    --err-bg: #fbe9e7;
+    --log-bg: #f8f9fb;
+    --mqtt: #6b4fbb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #17191d;
+      --card: #22252b;
+      --border: #363a42;
+      --text: #e6e8eb;
+      --muted: #9aa1ad;
+      --input-bg: #1b1d22;
+      --primary: #4c8bf5;
+      --primary-text: #ffffff;
+      --success: #2fa865;
+      --danger: #e5534b;
+      --info-bg: #1e2a3d;
+      --ok-bg: #18301f;
+      --err-bg: #3a1d1b;
+      --log-bg: #1b1d22;
+      --mqtt: #b29cf0;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #17191d;
+    --card: #22252b;
+    --border: #363a42;
+    --text: #e6e8eb;
+    --muted: #9aa1ad;
+    --input-bg: #1b1d22;
+    --primary: #4c8bf5;
+    --primary-text: #ffffff;
+    --success: #2fa865;
+    --danger: #e5534b;
+    --info-bg: #1e2a3d;
+    --ok-bg: #18301f;
+    --err-bg: #3a1d1b;
+    --log-bg: #1b1d22;
+    --mqtt: #b29cf0;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header { padding: 18px 16px 6px; max-width: 1100px; width: 100%; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 1.35rem; }
+  header p { margin: 2px 0 0; color: var(--muted); }
+
+  .banner {
+    max-width: 1100px; margin: 10px auto 0; width: calc(100% - 32px);
+    padding: 10px 14px; border-radius: 8px;
+    background: var(--err-bg); border: 1px solid var(--danger);
+  }
+
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: 16px;
+    padding: 12px 16px 16px;
+    max-width: 1100px; width: 100%; margin: 0 auto;
+  }
+  @media (max-width: 760px) {
+    main { grid-template-columns: minmax(0, 1fr); }
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    min-width: 0;
+  }
+  .card h2 { margin: 0 0 12px; font-size: 1rem; }
+  .card h2 + .hint { margin-top: -8px; }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  .field { display: grid; grid-template-columns: 116px minmax(0, 1fr); align-items: center; gap: 8px; margin: 8px 0; }
+  .field label { color: var(--muted); }
+  .row { display: flex; gap: 8px; min-width: 0; }
+  .row > input { flex: 1; min-width: 0; }
+
+  input[type="text"], input[type="password"], input[type="url"] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--input-bg);
+    color: var(--text);
+    font: inherit;
+  }
+  input:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+  input.invalid { border-color: var(--danger); box-shadow: 0 0 0 1px var(--danger); }
+
+  button {
+    font: inherit;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  button:disabled, input:disabled { opacity: .55; cursor: not-allowed; }
+  button.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-text); }
+  button.success { background: var(--success); border-color: var(--success); color: #fff; }
+  button.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+  button.block { width: 100%; margin-top: 10px; }
+  button.invalid { box-shadow: 0 0 0 2px var(--danger); }
+
+  .device {
+    flex: 1; min-width: 0;
+    padding: 8px 10px; border: 1px dashed var(--border); border-radius: 6px;
+    color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .device.selected { color: var(--text); border-style: solid; }
+  .check { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .9rem; margin: 6px 0 0 124px; }
+
+  .hint { color: var(--muted); font-size: .85rem; margin: 4px 0 0; }
+  .hint code { font-size: .85em; }
+
+  .notice { margin-top: 10px; padding: 8px 12px; border-radius: 6px; font-size: .92rem; }
+  .notice.ok { background: var(--ok-bg); border: 1px solid var(--success); }
+  .notice.error { background: var(--err-bg); border: 1px solid var(--danger); }
+  .notice[hidden] { display: none; }
+
+  .progress { height: 4px; margin-top: 10px; border-radius: 2px; overflow: hidden; background: var(--border); visibility: hidden; }
+  .progress.active { visibility: visible; }
+  .progress::after {
+    content: ""; display: block; height: 100%; width: 35%;
+    background: var(--primary); animation: slide 1.1s ease-in-out infinite;
+  }
+  @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+
+  .log-card { display: flex; flex-direction: column; min-height: 360px; }
+  #log {
+    flex: 1;
+    min-height: 240px;
+    max-height: calc(100vh - 230px);
+    overflow-y: auto;
+    background: var(--log-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font: 13px/1.5 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 760px) { #log { max-height: 60vh; } }
+  #log .time { color: var(--muted); }
+  #log .mqtt { color: var(--mqtt); }
+  .log-actions { display: flex; justify-content: space-between; margin-top: 10px; }
+
+  footer {
+    padding: 8px 16px; border-top: 1px solid var(--border); background: var(--card);
+    color: var(--muted); font-size: .9rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Watts Live — MQTT BLE Config</h1>
+  <p>Write MQTT credentials to a Watts Live module over Bluetooth, then watch its messages.</p>
+</header>
+<div id="support-banner" class="banner" hidden></div>
+
+<main>
+  <section class="card">
+    <h2>Device &amp; Credentials</h2>
+
+    <div class="field">
+      <label>BLE Device</label>
+      <div class="row">
+        <div id="device-name" class="device">No device selected</div>
+        <button id="btn-select" class="primary" type="button">Select…</button>
+      </div>
+    </div>
+    <label class="check"><input id="show-all" type="checkbox"> Show all Bluetooth devices</label>
+
+    <hr>
+
+    <div class="field">
+      <label for="hostname">Hostname</label>
+      <input id="hostname" type="text" autocomplete="off" spellcheck="false" placeholder="192.168.1.10">
+    </div>
+    <div class="field">
+      <label for="port">Port</label>
+      <input id="port" type="text" inputmode="numeric" autocomplete="off" placeholder="1883">
+    </div>
+    <div class="field">
+      <label for="username">Username</label>
+      <input id="username" type="text" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <div class="row">
+        <input id="password" type="password" autocomplete="new-password">
+        <button id="btn-show-pw" type="button">Show</button>
+      </div>
+    </div>
+
+    <button id="btn-write" class="success block" type="button">Connect &amp; Write (Ctrl+Enter)</button>
+    <div id="progress" class="progress"></div>
+    <div id="notice" class="notice" role="status" hidden></div>
+
+    <hr>
+
+    <h2>Topic Listener</h2>
+    <p class="hint">Browsers can only reach a broker over WebSockets, so this needs the broker's
+      WebSocket listener, not port 1883. The Home Assistant Mosquitto add-on uses
+      <code>wss://…:8884</code> (or <code>ws://…:1884</code> when this page runs on localhost).</p>
+    <div class="field">
+      <label for="serial">Serial</label>
+      <input id="serial" type="text" autocomplete="off" spellcheck="false" placeholder="ABC1234">
+    </div>
+    <div class="field">
+      <label for="ws-url">WebSocket URL</label>
+      <input id="ws-url" type="url" autocomplete="off" spellcheck="false" placeholder="wss://broker.local:8884">
+    </div>
+    <button id="btn-mqtt" class="primary block" type="button">Start Topic Listener</button>
+  </section>
+
+  <section class="card log-card">
+    <h2>Activity Log</h2>
+    <div id="log" aria-live="polite"></div>
+    <div class="log-actions">
+      <button id="btn-clear" type="button">Clear</button>
+      <button id="btn-copy" type="button">Copy</button>
+    </div>
+  </section>
+</main>
+
+<footer id="status">Ready</footer>
+
+<script>
+"use strict";
+
+const SERVICE_UUID = "a2e1ea9b-01e8-4fe5-9b99-35e9cb44d4b6";
+const CHARACTERISTICS = {
+  hostname: "8143af58-b9b8-47ca-911d-ad3564f10d0b",
+  port:     "c0175553-1ffd-4eb5-99ca-dc271f4ca050",
+  username: "41b6703a-0bac-46b4-a0fa-273f5bf641dc",
+  password: "a59394ed-b929-41a9-81ab-8a16eec6a28c",
+};
+
+const MAX_LOG_LINES = 2000;
+const STORAGE_KEY = "watts-live-config";
+// Never stored: the password stays in the form only for this visit.
+const SAVED_FIELDS = ["hostname", "port", "username", "serial", "ws-url"];
+
+const $ = (id) => document.getElementById(id);
+
+let device = null;
+let mqttClient = null;
+let mqttConnectedOnce = false;
+let busy = false;
+const bleAvailable = window.isSecureContext && "bluetooth" in navigator;
+
+// ──────────────────────────────────────────────────────────────────────────
+// Utility functions
+// ──────────────────────────────────────────────────────────────────────────
+function setStatus(msg) {
+  $("status").textContent = msg;
+}
+
+function log(msg, { status = true, mqtt = false } = {}) {
+  const box = $("log");
+  const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 4;
+
+  const line = document.createElement("div");
+  const time = document.createElement("span");
+  time.className = "time";
+  time.textContent = new Date().toLocaleTimeString() + "  ";
+  const text = document.createElement("span");
+  if (mqtt) text.className = "mqtt";
+  text.textContent = msg;
+  line.append(time, text);
+  box.append(line);
+
+  while (box.childElementCount > MAX_LOG_LINES) box.firstElementChild.remove();
+  if (atBottom) box.scrollTop = box.scrollHeight;
+  if (status && msg) setStatus(msg.split("\n")[0]);
+}
+
+function showNotice(msg, kind) {
+  const el = $("notice");
+  el.textContent = msg;
+  el.className = `notice ${kind}`;
+  el.hidden = false;
+}
+
+function hideNotice() {
+  $("notice").hidden = true;
+}
+
+function flashInvalid(el, ms = 1500) {
+  el.classList.add("invalid");
+  setTimeout(() => el.classList.remove("invalid"), ms);
+  el.focus();
+}
+
+function parsePort(str) {
+  if (!/^\d+$/.test(str)) return null;
+  const port = Number(str);
+  return port >= 1 && port <= 65535 ? port : null;
+}
+
+function describeError(e) {
+  // Web Bluetooth raises DOMExceptions whose name says more than the message
+  if (!e) return "Unknown error";
+  if (e.name === "NetworkError") {
+    return `${e.message || "Connection failed"} — is the module in range and not connected to another app?`;
+  }
+  if (e.name === "NotFoundError" && /service/i.test(e.message)) {
+    return "This device does not have the Watts Live configuration service. Is it a Watts Live module?";
+  }
+  return e.message || e.name || String(e);
+}
+
+function setBusy(on) {
+  busy = on;
+  const controls = ["hostname", "port", "username", "password", "btn-show-pw", "show-all", "serial", "ws-url", "btn-mqtt"];
+  for (const id of controls) $(id).disabled = on;
+  $("btn-select").disabled = on || !bleAvailable;
+  $("btn-write").disabled = on || !bleAvailable;
+  $("progress").classList.toggle("active", on);
+  setStatus(on ? "Working…" : "Ready");
+}
+
+function loadSaved() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    for (const id of SAVED_FIELDS) {
+      if (typeof saved[id] === "string") $(id).value = saved[id];
+    }
+  } catch { /* storage blocked or corrupt — start with an empty form */ }
+}
+
+function saveFields() {
+  try {
+    const data = Object.fromEntries(SAVED_FIELDS.map((id) => [id, $(id).value]));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch { /* storage blocked — nothing to do */ }
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// BLE logic
+// ──────────────────────────────────────────────────────────────────────────
+function onDeviceDisconnected() {
+  // We disconnect ourselves after every write; only a drop mid-write is news
+  if (busy) log("BLE: Device disconnected unexpectedly.");
+}
+
+async function selectDevice() {
+  if (busy) return;
+  hideNotice();
+  // A page may only open services it names up front, so the service UUID
+  // goes in optionalServices even when every device is shown.
+  const options = $("show-all").checked
+    ? { acceptAllDevices: true, optionalServices: [SERVICE_UUID] }
+    : { filters: [{ namePrefix: "Watts" }, { services: [SERVICE_UUID] }], optionalServices: [SERVICE_UUID] };
+  try {
+    log("Waiting for device selection…");
+    const picked = await navigator.bluetooth.requestDevice(options);
+    if (device && device !== picked) {
+      device.removeEventListener("gattserverdisconnected", onDeviceDisconnected);
+      if (device.gatt.connected) device.gatt.disconnect();
+    }
+    device = picked;
+    device.addEventListener("gattserverdisconnected", onDeviceDisconnected);
+    const label = device.name || "Unnamed device";
+    $("device-name").textContent = label;
+    $("device-name").classList.add("selected");
+    log(`Selected ${label}.`);
+  } catch (e) {
+    // Chrome uses NotFoundError both for a closed chooser and for a missing adapter
+    if (e.name === "NotFoundError" && /cancel/i.test(e.message)) {
+      log("No device selected. Tick “Show all Bluetooth devices” if your module is not listed.");
+    } else {
+      log(`Device selection failed: ${describeError(e)}`);
+      showNotice(describeError(e), "error");
+    }
+  }
+}
+
+async function writeCharacteristic(ch, value) {
+  // Match bleak: use a write with response when the characteristic supports it
+  if (ch.properties.write) return ch.writeValueWithResponse(value);
+  return ch.writeValueWithoutResponse(value);
+}
+
+async function connectAndWrite() {
+  if (busy || !bleAvailable) return;
+  hideNotice();
+
+  if (!device) {
+    flashInvalid($("btn-select"));
+    showNotice("Please select a BLE device first.", "error");
+    return;
+  }
+
+  const hostname = $("hostname").value.trim();
+  const portStr = $("port").value.trim();
+  const username = $("username").value.trim();
+  const password = $("password").value;
+
+  if (!hostname || !portStr) {
+    if (!portStr) flashInvalid($("port"));
+    if (!hostname) flashInvalid($("hostname"));
+    showNotice("Hostname and port are required.", "error");
+    return;
+  }
+
+  const port = parsePort(portStr);
+  if (port === null) {
+    flashInvalid($("port"));
+    showNotice("Port must be a number between 1 and 65535.", "error");
+    return;
+  }
+
+  if (password && !username) {
+    flashInvalid($("username"));
+    showNotice("MQTT does not allow a password without a username.", "error");
+    return;
+  }
+
+  if (!password && !confirm(
+    "No password entered. This only works if your broker allows it.\n\n" +
+    "Write the configuration anyway?"
+  )) {
+    return;
+  }
+
+  const enc = new TextEncoder();
+  const values = {
+    hostname: enc.encode(hostname),
+    port: new Uint8Array([port & 0xff, port >> 8]),  // uint16, little endian
+    username: enc.encode(username),
+    password: enc.encode(password),
+  };
+
+  setBusy(true);
+  log("Starting BLE write task…");
+  try {
+    log(`Connecting to ${device.name || "device"}…`);
+    const server = await device.gatt.connect();
+    log("Connected. Writing values…");
+    const service = await server.getPrimaryService(SERVICE_UUID);
+    for (const [field, uuid] of Object.entries(CHARACTERISTICS)) {
+      log(`Writing ${field} to ${uuid}…`);
+      const ch = await service.getCharacteristic(uuid);
+      await writeCharacteristic(ch, values[field]);
+    }
+    log("All values written successfully.");
+    showNotice("All values written.", "ok");
+  } catch (e) {
+    log(`Write failed: ${describeError(e)}`);
+    if (e && e.name && describeError(e) !== e.message) log(`(${e.name}: ${e.message})`, { status: false });
+    showNotice(describeError(e), "error");
+  } finally {
+    if (device.gatt.connected) device.gatt.disconnect();
+    setBusy(false);
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// MQTT logic
+// ──────────────────────────────────────────────────────────────────────────
+function buildTopicFromSerial() {
+  const serial = $("serial").value.trim();
+  return serial ? `watts/${serial}/measurement` : null;
+}
+
+function parseWsUrl(str) {
+  try {
+    const url = new URL(str);
+    return url.protocol === "ws:" || url.protocol === "wss:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+function setListenerButton(running) {
+  const btn = $("btn-mqtt");
+  btn.textContent = running ? "Stop Topic Listener" : "Start Topic Listener";
+  btn.className = `${running ? "danger" : "primary"} block`;
+}
+
+function startMqttListener() {
+  if (mqttClient) return;
+
+  const urlStr = $("ws-url").value.trim();
+  const user = $("username").value.trim();
+  const pwd = $("password").value;
+  const topic = buildTopicFromSerial();
+
+  let missing = false;
+  if (!urlStr) { flashInvalid($("ws-url")); missing = true; }
+  if (!topic) { flashInvalid($("serial")); missing = true; }
+  if (missing) {
+    log("Please enter Serial and WebSocket URL before starting the listener.");
+    return;
+  }
+
+  const url = parseWsUrl(urlStr);
+  if (!url) {
+    flashInvalid($("ws-url"));
+    log("MQTT: The WebSocket URL must start with ws:// or wss://, e.g. wss://broker.local:8884");
+    return;
+  }
+  if (location.protocol === "https:" && url.protocol === "ws:") {
+    flashInvalid($("ws-url"));
+    log("MQTT: This page is served over HTTPS, so the browser blocks unencrypted ws:// connections. " +
+        "Use the broker's wss:// listener, or run this page locally (see the README).");
+    return;
+  }
+  if (typeof mqtt === "undefined") {
+    log("MQTT: The MQTT library did not load. Check your internet connection and reload the page.");
+    return;
+  }
+
+  mqttConnectedOnce = false;
+  const client = mqtt.connect(url.href, {
+    username: user || undefined,
+    password: pwd || undefined,
+    clientId: `watts-live-web-${Math.random().toString(16).slice(2, 10)}`,
+    reconnectPeriod: 5000,
+    connectTimeout: 10000,
+  });
+  mqttClient = client;
+
+  client.on("connect", () => {
+    mqttConnectedOnce = true;
+    log("MQTT: Connected successfully.");
+    client.subscribe(topic, { qos: 0 }, (err, granted) => {
+      if (err) {
+        log(`MQTT: Subscribe failed: ${err.message}`);
+      } else if (granted && granted[0] && granted[0].qos === 128) {
+        log(`MQTT: The broker refused the subscription to '${topic}'.`);
+      } else {
+        log(`MQTT: Subscribed to '${topic}'.`);
+      }
+    });
+  });
+
+  let failedAttempts = 0;
+  client.on("reconnect", () => {
+    if (mqttConnectedOnce) {
+      log("MQTT: Reconnecting…");
+    } else if (failedAttempts++ === 0) {
+      log("MQTT: Could not reach the broker, retrying… Check the URL, that the broker has a " +
+          "WebSocket listener, and for wss:// that this browser trusts its certificate.");
+    } else {
+      log("MQTT: Could not reach the broker, retrying…");
+    }
+  });
+
+  client.on("offline", () => {
+    if (mqttConnectedOnce && mqttClient === client) log("MQTT: Connection lost, retrying…");
+  });
+
+  client.on("error", (err) => {
+    // CONNACK 4/5 means bad credentials; retrying would only repeat the refusal
+    if (err && (err.code === 4 || err.code === 5)) {
+      log(`MQTT: Connection refused (${err.message}).`);
+      stopMqttListener();
+      return;
+    }
+    log(`MQTT: ${err && err.message ? err.message : "Connection error"}`);
+  });
+
+  client.on("message", (msgTopic, payload) => {
+    log(`[${msgTopic}] ${payload.toString()}`, { status: false, mqtt: true });
+  });
+
+  setListenerButton(true);
+  log(`MQTT: Connecting to ${url.href}… (topic will be '${topic}')`);
+}
+
+function stopMqttListener() {
+  if (!mqttClient) return;
+  const client = mqttClient;
+  mqttClient = null;
+  try {
+    client.end(true);
+  } catch (e) {
+    log(`MQTT: Error while stopping: ${e.message}`);
+  }
+  setListenerButton(false);
+  log("MQTT: Listener stopped.");
+}
+
+function toggleMqtt() {
+  if (busy) return;
+  if (mqttClient) stopMqttListener();
+  else startMqttListener();
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// UI wiring
+// ──────────────────────────────────────────────────────────────────────────
+function togglePassword() {
+  const pw = $("password");
+  const show = pw.type === "password";
+  pw.type = show ? "text" : "password";
+  $("btn-show-pw").textContent = show ? "Hide" : "Show";
+}
+
+function clearLogs() {
+  $("log").replaceChildren();
+}
+
+async function copyLogs() {
+  const text = [...$("log").children].map((line) => line.textContent).join("\n");
+  try {
+    await navigator.clipboard.writeText(text);
+    setStatus("Log copied to clipboard.");
+  } catch {
+    setStatus("Could not copy the log — select it and copy manually.");
+  }
+}
+
+function checkSupport() {
+  const banner = $("support-banner");
+  if (!window.isSecureContext) {
+    banner.textContent = "Bluetooth only works on secure pages. Open this page over https:// or from http://localhost.";
+  } else if (!("bluetooth" in navigator)) {
+    banner.textContent = "This browser does not support Web Bluetooth. Use Chrome or Edge on Windows, macOS, " +
+      "Linux or Android. Firefox, Safari and all iPhone/iPad browsers cannot configure the module " +
+      "(the topic listener still works).";
+  } else {
+    navigator.bluetooth.getAvailability?.().then((ok) => {
+      if (!ok) log("Bluetooth seems to be off or no adapter was found.");
+    }).catch(() => {});
+    return;
+  }
+  banner.hidden = false;
+}
+
+$("btn-select").addEventListener("click", selectDevice);
+$("btn-write").addEventListener("click", connectAndWrite);
+$("btn-show-pw").addEventListener("click", togglePassword);
+$("btn-mqtt").addEventListener("click", toggleMqtt);
+$("btn-clear").addEventListener("click", clearLogs);
+$("btn-copy").addEventListener("click", copyLogs);
+for (const id of SAVED_FIELDS) $(id).addEventListener("input", saveFields);
+
+document.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+    e.preventDefault();
+    connectAndWrite();
+  }
+});
+window.addEventListener("pagehide", stopMqttListener);
+
+loadSaved();
+checkSupport();
+setBusy(false);
+log(bleAvailable ? "Ready. Click “Select…” to pick your Watts Live module." : "Ready.");
+</script>
+</body>
+</html>

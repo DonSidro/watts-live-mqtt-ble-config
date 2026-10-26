@@ -8,7 +8,7 @@
 
 <a href="https://buymeacoffee.com/mitsmarthome" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 40px !important;width: 145px !important;" ></a>
 
-A cross-platform desktop tool to configure **Watts Live** IoT devices over **Bluetooth Low Energy (BLE)** and monitor **MQTT messages** in real time.
+A cross-platform desktop tool — and a [web version](#web-version) that runs in Chrome or Edge — to configure **Watts Live** IoT devices over **Bluetooth Low Energy (BLE)** and monitor **MQTT messages** in real time.
 
 This app allows you to scan for BLE-enabled Watts Live devices, enter MQTT connection credentials, write them to the device, and optionally connect to your MQTT broker to view live measurement messages.
 
@@ -32,6 +32,54 @@ This app allows you to scan for BLE-enabled Watts Live devices, enter MQTT conne
 -  **Modern, dark-themed GUI** built with [ttkbootstrap](https://github.com/israel-dryer/ttkbootstrap)
 -  Input validation with real-time feedback and friendly error highlights
 -  Cross-platform (Windows, macOS, Linux)
+
+---
+
+## Web Version
+
+**Open https://donsidro.github.io/watts-live-mqtt-ble-config/** — nothing to install.
+
+The web version does the same job from the browser via
+[Web Bluetooth](https://developer.mozilla.org/docs/Web/API/Web_Bluetooth_API). Click
+**Select…**, pick the module in the browser's device picker, fill in the broker details and
+click **Connect & Write**. Everything runs in your browser; the credentials go only to the
+module (and to your broker if you start the listener). Hostname, port, username, serial and
+WebSocket URL are remembered in the browser; the password is not.
+
+### Supported browsers
+
+| Browser | Write config over BLE | Topic listener |
+|---|---|---|
+| Chrome / Edge / Opera on Windows, macOS, Android | ✅ | ✅ |
+| Chrome on Linux | ✅ (may need `chrome://flags/#enable-web-bluetooth`) | ✅ |
+| Firefox, Safari, any browser on iPhone/iPad | ❌ no Web Bluetooth | ✅ |
+
+If your module does not show up in the picker, tick **Show all Bluetooth devices**.
+
+### Topic listener in the browser
+
+A browser cannot open a plain MQTT connection on port 1883, so the listener connects to
+the broker's **WebSocket** listener instead, and asks for its URL separately. The module
+itself keeps using the hostname and port you write to it.
+
+- **Home Assistant Mosquitto add-on:** WebSockets are already on — use
+  `wss://<host>:8884` (needs a certificate the browser trusts) or `ws://<host>:1884`.
+- **Plain Mosquitto:** add a WebSocket listener to `mosquitto.conf`:
+
+  ```
+  listener 9001
+  protocol websockets
+  ```
+
+Because the hosted page is served over HTTPS, the browser only allows encrypted `wss://`
+connections from it. To use an unencrypted `ws://` listener on your own network, run the
+page locally instead:
+
+```bash
+cd web
+python -m http.server 8000
+# then open http://localhost:8000 in Chrome or Edge
+```
 
 ---
 
@@ -198,7 +246,9 @@ Messages from this topic appear live in the **Activity Log** panel.
 watts-live-mqtt-ble-config/
 ├── watts_live_gui.py      # Python GUI app
 ├── watts_live_gui.spec    # PyInstaller spec for the macOS .app bundle
-├── .github/workflows/     # CI: builds the Windows .exe and macOS .app on each tag
+├── web/index.html         # Web version (Web Bluetooth + MQTT over WebSockets)
+├── .github/workflows/     # CI: builds the Windows .exe and macOS .app on each tag,
+│                          #     deploys web/ to GitHub Pages on each push to main
 ├── README.md              # This file
 ├── requirements.txt       # Python dependencies
 ├── images/                # Screenshots
