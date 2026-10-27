@@ -346,6 +346,10 @@ function describeError(e) {
   if (e.name === "NetworkError") {
     return `${e.message || "Connection failed"} — is the module in range and not connected to another app?`;
   }
+  if (/globally disabled/i.test(e.message)) {
+    return "The browser is blocking Bluetooth for this page. Click the icon left of the address bar → Site settings " +
+      "and set Bluetooth to Ask or Allow. In Brave, also enable brave://flags/#brave-web-bluetooth-api and relaunch.";
+  }
   if (e.name === "NotFoundError" && /service/i.test(e.message)) {
     return "This device does not have the Watts Live configuration service. Is it a Watts Live module?";
   }
@@ -424,6 +428,24 @@ async function writeCharacteristic(ch, value) {
   return ch.writeValueWithoutResponse(value);
 }
 
+async function connectToService(attempts = 3) {
+  // Chrome (notably on Windows) often loses the link during the first service
+  // discovery; reconnecting usually succeeds, so retry dropped connections.
+  for (let i = 1; ; i++) {
+    try {
+      log(`Connecting to ${device.name || "device"}${i > 1 ? ` (attempt ${i}/${attempts})` : ""}…`);
+      const server = await device.gatt.connect();
+      log("Connected. Discovering services…");
+      return await server.getPrimaryService(SERVICE_UUID);
+    } catch (e) {
+      if (e.name !== "NetworkError" || i >= attempts) throw e;
+      log(`Connection dropped (${e.message}). Retrying…`);
+      if (device.gatt.connected) device.gatt.disconnect();
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+  }
+}
+
 async function connectAndWrite() {
   if (busy || !bleAvailable) return;
   hideNotice();
@@ -477,10 +499,8 @@ async function connectAndWrite() {
   setBusy(true);
   log("Starting BLE write task…");
   try {
-    log(`Connecting to ${device.name || "device"}…`);
-    const server = await device.gatt.connect();
-    log("Connected. Writing values…");
-    const service = await server.getPrimaryService(SERVICE_UUID);
+    const service = await connectToService();
+    log("Writing values…");
     for (const [field, uuid] of Object.entries(CHARACTERISTICS)) {
       log(`Writing ${field} to ${uuid}…`);
       const ch = await service.getCharacteristic(uuid);
